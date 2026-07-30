@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>농업 병해충 AI 라이브 진단 및 맞춤형 처방 서비스 (AgriShield AI)</title>
+  <meta name="description" content="국가 공공 병해충 진단 포털 데이터 기반 AI 실시간 카메라 라이브 진단, 맞춤형 농약/친환경 방제 처방 및 자격증 문제은행 에그테크 플랫폼">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
+    rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body class="dark-theme">
+
+  <!-- Header Section -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <i class="fa-solid fa-leaf"></i>
+          <span class="pulse-ring"></span>
+        </div>
+        <div class="logo-text">
+          <span class="brand-title">AgriShield <span class="accent-text">AI</span></span>
+          <span class="brand-subtitle">농업 병해충 라이브 진단 & 맞춤 처방 문제은행</span>
+        </div>
+      </div>
+
+      <div class="badge-area">
+        <span class="status-badge live">
+          <span class="status-dot"></span> NCPMS 공공 DB 실시간 연동
+        </span>
+      </div>
+
+      <nav class="main-nav">
+        <button class="nav-btn active" data-tab="diagnosis">
+          <i class="fa-solid fa-camera"></i> AI 라이브 진단 & 처방
+        </button>
+        <button class="nav-btn" data-tab="exam">
+          <i class="fa-solid fa-file-pen"></i> 자격증 문제은행
+        </button>
+        <button class="nav-btn" data-tab="notebook">
+          <i class="fa-solid fa-book-bookmark"></i> 오답노트 & 영농도감
+          <span class="badge-count" id="notebookCount">3</span>
+        </button>
+        <button class="nav-btn" data-tab="flashcard">
+          <i class="fa-solid fa-bolt"></i> 5문항 퀵 플래시카드
+        </button>
+        <button class="nav-btn" data-tab="dashboard">
+          <i class="fa-solid fa-chart-line"></i> 대시보드 & 로드맵
+        </button>
+      </nav>
+
+      <div class="header-actions">
+        <button class="quick-camera-btn" id="quickScanBtn">
+          <i class="fa-solid fa-expand"></i> 현장 3초 진단
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="app-main">
+
+    <!-- 1. AI LIVE DIAGNOSIS & PRESCRIPTION MODULE (CORE) -->
+    <section id="diagnosis-tab" class="tab-content active">
+      <div class="module-banner">
+        <div class="banner-info">
+          <h2><i class="fa-solid fa-wand-magic-sparkles"></i> AI 실시간 카메라 라이브 진단 & 맞춤 처방</h2>
+          <p>카메라로 병해충 환부를 비추면 3초 내에 진단 결과와 국가 공인 약제 처방, 안전사용기준, 친환경 방제법을 라이브 채팅으로 제공합니다.</p>
+        </div>
+        <div class="sample-picker">
+          <span class="picker-label"><i class="fa-solid fa-images"></i> 시연용 병해충 샘플 선택:</span>
+          <div class="picker-buttons">
+            <button class="sample-btn active" data-sample="pepper">🌶️ 고추 탄저병</button>
+            <button class="sample-btn" data-sample="apple">🍎 사과 점무늬낙엽병</button>
+            <button class="sample-btn" data-sample="rice">🌾 벼 잎집무늬마름병</button>
+            <button class="sample-btn" data-sample="tomato">🍅 토마토 황화잎말림</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagnosis-grid">
+        <!-- Viewport & Camera Panel -->
+        <div class="camera-panel glass-card">
+          <div class="panel-header">
+            <span class="panel-title"><i class="fa-solid fa-video"></i> 현장 카메라 뷰포트 / 환부 스캐너</span>
+            <span class="fps-counter" id="fpsCounter"><i class="fa-solid fa-signal"></i> 4K 60FPS LIVE</span>
+          </div>
+
+          <div class="viewport-container" id="viewportContainer">
+            <!-- Simulated Camera Feed / Image Canvas -->
+            <div class="camera-feed" id="cameraFeed">
+              <div class="reticle-grid"></div>
+              <div class="scan-line" id="scanLine"></div>
+
+              <!-- Bounding Box -->
+              <div class="bounding-box" id="boundingBox">
+                <div class="bbox-corner tl"></div>
+                <div class="bbox-corner tr"></div>
+                <div class="bbox-corner bl"></div>
+                <div class="bbox-corner br"></div>
+                <div class="bbox-label" id="bboxLabel">
+                  <i class="fa-solid fa-microscope"></i> <span id="bboxDisease">고추 탄저병 (Colletotrichum)</span>
+                  <span class="confidence-tag" id="bboxConf">98.6%</span>
+                </div>
+              </div>
+
+              <!-- HUD Overlay Info -->
+              <div class="hud-overlay">
+                <div class="hud-item top-left">
+                  <span>ISO 400 | F/2.8</span>
+                  <span id="hudTimestamp">2026-07-28 13:31</span>
+                </div>
+                <div class="hud-item top-right">
+                  <span class="status-pill active" id="hudStatus"><i class="fa-solid fa-arrows-spin fa-spin"></i> 환부 스캐닝
+                    중...</span>
+                </div>
+                <div class="hud-item bottom-center" id="hudHint">
+                  <i class="fa-solid fa-hand-pointer"></i> 화면을 클릭하거나 이미지를 드래그하여 다른 환부를 진단하세요.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Camera Controls & Upload -->
+          <div class="camera-controls">
+            <div class="upload-box">
+              <input type="file" id="imageUpload" accept="image/*" class="file-input">
+              <label for="imageUpload" class="upload-label">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>내 현장 사진 업로드</span>
+              </label>
+            </div>
+            <button class="trigger-scan-btn" id="triggerScanBtn">
+              <i class="fa-solid fa-bolt"></i> 3초 AI 라이브 진단 실행
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Chat Prescription Panel -->
+        <div class="chat-panel glass-card">
+          <div class="panel-header">
+            <div class="chat-bot-title">
+              <div class="bot-avatar">
+                <i class="fa-solid fa-robot"></i>
+              </div>
+              <div>
+                <span class="bot-name">NCPMS 공공 DB 처방 AI 에이전트</span>
+                <span class="bot-status"><i class="fa-solid fa-circle"></i> 온라인 (실시간 질의응답)</span>
+              </div>
+            </div>
+            <button class="reset-chat-btn" id="resetChatBtn" title="대화 초기화">
+              <i class="fa-solid fa-rotate-right"></i>
+            </button>
+          </div>
+
+          <!-- Chat Stream Area -->
+          <div class="chat-stream" id="chatStream">
+            <!-- Dynamic Messages will be injected here -->
+          </div>
+
+          <!-- Quick Interactive Inputs -->
+          <div class="chat-input-area">
+            <div class="quick-questions" id="quickQuestions">
+              <button class="q-btn" data-q="방제 농약의 희석 배율과 안전사용기준은 무엇인가요?">🧪 희석배율 & 안전기준</button>
+              <button class="q-btn" data-q="친환경 유기농 방제법을 알려주세요.">🌿 친환경 방제법</button>
+              <button class="q-btn" data-q="관련 식물보호기사 자격증 기출문제를 풀어보고 싶어요.">📝 연관 시험문제</button>
+            </div>
+            <div class="input-wrapper">
+              <input type="text" id="chatInput" placeholder="추가 농약 처방, 희석배율, 예방법을 질문해보세요..." autocomplete="off">
+              <button id="sendChatBtn" class="send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. CERTIFICATION EXAM & MOCK TEST BANK MODULE -->
+    <section id="exam-tab" class="tab-content">
+      <div class="module-banner">
+        <div class="banner-info">
+          <h2><i class="fa-solid fa-graduation-cap"></i> 이미지 문제은행 & 필기/실기 대비 모의고사</h2>
+          <p>식물보호기사, 식물보호산업기사, 유기농업기능사 등 최신 기출 및 AI 진단 데이터 연동 고화질 실기 사진 식별 문항을 풀이합니다.</p>
+        </div>
+        <div class="exam-stats-bar">
+          <div class="stat-pill"><i class="fa-solid fa-trophy"></i> 나의 평균 점수: <strong id="examAvgScore">88점</strong>
+          </div>
+          <div class="stat-pill"><i class="fa-solid fa-check-double"></i> 누적 풀이: <strong
+              id="examSolvedCount">42문항</strong></div>
+          <div class="stat-pill accent"><i class="fa-solid fa-bullseye"></i> 합격 예측: <strong id="passPrediction">합격 우수
+              (84.5%)</strong></div>
+        </div>
+      </div>
+
+      <div class="exam-container glass-card">
+        <div class="exam-header-nav">
+          <div class="filter-tabs">
+            <button class="filter-btn active" data-exam-filter="all">전체 문제</button>
+            <button class="filter-btn" data-exam-filter="plant_engineer">식물보호기사</button>
+            <button class="filter-btn" data-exam-filter="practical">실기 (사진 식별)</button>
+            <button class="filter-btn" data-exam-filter="organic">유기농업기능사</button>
+          </div>
+          <div class="timer-box">
+            <i class="fa-regular fa-clock"></i> 남은 시간: <span id="examTimer">14:52</span>
+          </div>
+        </div>
+
+        <div class="exam-body" id="examBody">
+          <!-- Question Card Container -->
+        </div>
+
+        <div class="exam-footer">
+          <button class="exam-nav-btn" id="prevQuestionBtn" disabled><i class="fa-solid fa-chevron-left"></i> 이전
+            문제</button>
+          <span class="question-indicator" id="questionIndicator">문제 1 / 5</span>
+          <button class="exam-nav-btn accent" id="nextQuestionBtn">다음 문제 <i
+              class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. SMART WRONG-ANSWER NOTEBOOK & FARMING LOG MODULE -->
+    <section id="notebook-tab" class="tab-content">
+      <div class="module-banner">
+        <div class="banner-info">
+          <h2><i class="fa-solid fa-book-bookmark"></i> 지능형 오답노트 & 영농 학습 도감</h2>
+          <p>현장 AI 실시간 카메라로 처방받은 방제 기록과 문제 풀이 중 틀린 문항을 통합 관리하고, AI가 약점을 분석하여 큐레이션합니다.</p>
+        </div>
+        <div class="curation-box glass-card">
+          <div class="curation-icon"><i class="fa-solid fa-brain"></i></div>
+          <div class="curation-text">
+            <strong>AI 약점 분석 리포트:</strong> 수험생님은 <u>곰팡이성 잎 병해(탄저병, 점무늬낙엽병)의 등록 농약 작용기작 및 안전사용기준</u> 문항에서 오답률이 높은 편입니다.
+          </div>
+          <button class="curation-action-btn" id="startCurationQuizBtn">
+            <i class="fa-solid fa-bolt"></i> 약점 극복 3문항 맞춤 풀기
+          </button>
+        </div>
+      </div>
+
+      <div class="notebook-grid">
+        <div class="notebook-sidebar glass-card">
+          <h3><i class="fa-solid fa-filter"></i> 카테고리 필터</h3>
+          <ul class="category-list">
+            <li class="cat-item active" data-nb-filter="all"><i class="fa-solid fa-layer-group"></i> 전체 저장 항목 <span
+                class="count" id="countAll">3</span></li>
+            <li class="cat-item" data-nb-filter="field"><i class="fa-solid fa-camera"></i> 현장 AI 처방 이력 <span
+                class="count" id="countField">2</span></li>
+            <li class="cat-item" data-nb-filter="exam"><i class="fa-solid fa-xmark"></i> 시험 오답 문항 <span class="count"
+                id="countExam">1</span></li>
+            <li class="cat-item" data-nb-filter="organic"><i class="fa-solid fa-seedling"></i> 친환경 방제 도감 <span
+                class="count" id="countOrganic">3</span></li>
+          </ul>
+
+          <div class="export-box">
+            <button class="export-btn" id="exportPdfBtn">
+              <i class="fa-solid fa-file-pdf"></i> 영농 처방 일지 PDF 출력
+            </button>
+          </div>
+        </div>
+
+        <div class="notebook-list-area" id="notebookListArea">
+          <!-- Notebook Cards Injected via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 5-QUESTION QUICK FLASHCARD MODULE -->
+    <section id="flashcard-tab" class="tab-content">
+      <div class="module-banner">
+        <div class="banner-info">
+          <h2><i class="fa-solid fa-bolt"></i> 자투리 시간 5문항 퀵 플래시카드</h2>
+          <p>이동 중이나 현장에서 병해충 증상과 처방 핵심 포인트를 빠른 카드 플립으로 학습하는 에듀테크 반복 루프 체계입니다.</p>
+        </div>
+      </div>
+
+      <div class="flashcard-wrapper">
+        <div class="card-progress">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="cardProgressFill" style="width: 20%;"></div>
+          </div>
+          <span class="card-step" id="cardStepText">카드 1 / 5</span>
+        </div>
+
+        <div class="flashcard-container" id="flashcardContainer">
+          <div class="flashcard" id="flashcard">
+            <!-- Front -->
+            <div class="card-face card-front">
+              <div class="card-tag" id="fcTag">식물보호기사 실기 핵심</div>
+              <div class="card-img-holder">
+                <img id="fcImg" src="" alt="병해충 시각 자료">
+              </div>
+              <div class="card-question" id="fcQuestion">
+                위 병징을 유발하는 병원균명과 공인 추천 약제(농약)의 안전사용 기준은?
+              </div>
+              <div class="flip-hint"><i class="fa-solid fa-rotate"></i> 클릭하여 카드 뒤집기</div>
+            </div>
+            <!-- Back -->
+            <div class="card-face card-back">
+              <div class="card-title-back" id="fcTitleBack">고추 탄저병 (Anthracnose)</div>
+              <div class="card-details">
+                <p><strong>• 병원균:</strong> <i>Colletotrichum acutatum</i> (곰팡이균)</p>
+                <p><strong>• 등록 농약:</strong> 피라클로스트로빈 수화제 (다3)</p>
+                <p><strong>• 안전사용기준:</strong> 수화제 1,000배 희석, 수확 14일 전까지 3회 이내 살포</p>
+                <p><strong>• 친환경 방제:</strong> 난황유(식용유+계란노른자) 또는 유황합제 500배액 살포</p>
+              </div>
+              <div class="card-actions">
+                <button class="fc-btn remember" id="fcRememberBtn"><i class="fa-solid fa-circle-check"></i> 완벽히
+                  암기함</button>
+                <button class="fc-btn review" id="fcReviewBtn"><i class="fa-solid fa-clock-rotate-left"></i> 나중에
+                  재복습</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flashcard-controls">
+          <button class="fc-nav-btn" id="fcPrevBtn"><i class="fa-solid fa-arrow-left"></i> 이전 카드</button>
+          <button class="fc-nav-btn accent" id="fcNextBtn">다음 카드 <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. DASHBOARD & 10-YEAR ROADMAP MODULE -->
+    <section id="dashboard-tab" class="tab-content">
+      <div class="module-banner">
+        <div class="banner-info">
+          <h2><i class="fa-solid fa-chart-line"></i> 에그테크 데이터 대시보드 & 10개년 로드맵</h2>
+          <p>자격증 합격 예측률, 현장 진단 이력 통계, NCPMS 연동 데이터 현황 및 글로벌 에그테크 나스닥 상장 로드맵을 확인합니다.</p>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Metric Cards -->
+        <div class="metric-card glass-card">
+          <div class="metric-icon green"><i class="fa-solid fa-bullseye"></i></div>
+          <div class="metric-content">
+            <span class="metric-label">자격증 합격 예측 점수</span>
+            <span class="metric-value">84.5 <small>점 (안정권)</small></span>
+            <span class="metric-sub text-success"><i class="fa-solid fa-arrow-up"></i> 지난주 대비 +4.2점 상승</span>
+          </div>
+        </div>
+
+        <div class="metric-card glass-card">
+          <div class="metric-icon blue"><i class="fa-solid fa-camera"></i></div>
+          <div class="metric-content">
+            <span class="metric-label">현장 AI 라이브 진단 횟수</span>
+            <span class="metric-value">128 <small>회</small></span>
+            <span class="metric-sub"><i class="fa-solid fa-check"></i> 진단 정확도 98.4%</span>
+          </div>
+        </div>
+
+        <div class="metric-card glass-card">
+          <div class="metric-icon purple"><i class="fa-solid fa-database"></i></div>
+          <div class="metric-content">
+            <span class="metric-label">NCPMS 공공 DB 처방 수</span>
+            <span class="metric-value">1,420 <small>건</small></span>
+            <span class="metric-sub text-info"><i class="fa-solid fa-arrows-rotate"></i> 실시간 자동 업데이트</span>
+          </div>
+        </div>
+
+        <div class="metric-card glass-card">
+          <div class="metric-icon gold"><i class="fa-solid fa-award"></i></div>
+          <div class="metric-content">
+            <span class="metric-label">취학/영농 지식 랭킹</span>
+            <span class="metric-value">상위 3%</span>
+            <span class="metric-sub text-gold"><i class="fa-solid fa-crown"></i> 식물보호기사 챌린저</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Roadmap Section -->
+      <div class="roadmap-section glass-card">
+        <div class="roadmap-header">
+          <h3><i class="fa-solid fa-route"></i> 10개년 성장 시나리오 (Roadmap & Nasdaq Strategy)</h3>
+          <span class="roadmap-badge">글로벌 에그테크 도약 비전</span>
+        </div>
+
+        <div class="roadmap-stepper">
+          <!-- Phase 1 -->
+          <div class="step-item current">
+            <div class="step-badge">1~3년차</div>
+            <div class="step-title">초기 단계: 공공 DB 연동 & AI 고도화</div>
+            <div class="step-desc">
+              • 농업 계열 사모펀드 투자 유치<br>
+              • NCPMS 공공 진단/처방 데이터셋 결합 하이브리드 MVP 런칭<br>
+              • 실시간 카메라 스캐닝 & 3초 처방 채팅 런칭
+            </div>
+            <span class="step-status in-progress"><i class="fa-solid fa-spinner fa-spin"></i> 현재 단계 (진행중)</span>
+          </div>
+
+          <!-- Phase 2 -->
+          <div class="step-item">
+            <div class="step-badge">4~7년차</div>
+            <div class="step-title">성장 단계: 글로벌 로컬라이제이션 & B2B 생태계</div>
+            <div class="step-desc">
+              • 아시아 및 영어권 국가 농업 법규 & 방제 가이드 연계 확장<br>
+              • 글로벌 농자재/농약 기업 대상 맞춤형 B2B 처방 솔루션 공급<br>
+              • 영농 조합 & 지자체 기술센터 패키지 공급
+            </div>
+            <span class="step-status upcoming">예정 단계</span>
+          </div>
+
+          <!-- Phase 3 -->
+          <div class="step-item">
+            <div class="step-badge">8~10년차</div>
+            <div class="step-title">확장 단계: 글로벌 데이터 플랫폼 & 나스닥 상장</div>
+            <div class="step-desc">
+              • 전 세계 농가/대학/기업이 사용하는 표준 AI 병해충 진단 플랫폼 통합<br>
+              • 압도적 글로벌 현장 처방 트래픽 기반 나스닥 (NASDAQ) 상장 추진
+            </div>
+            <span class="step-status upcoming">최종 목표</span>
+          </div>
+        </div>
+
+        <!-- Crisis Strategy Callout -->
+        <div class="crisis-callout">
+          <h4><i class="fa-solid fa-shield-halved"></i> 3년차 정체기 극복 시나리오 (위기 대응 전략)</h4>
+          <p>단순 진단 앱의 부실 처방 문제를 극복하기 위해 <strong>[진단 결과 ➔ 원인 ➔ 실질적 맞춤 농약/희석배율 ➔ 친환경 방제]</strong>의 3초 라이브 채팅 UX를 전면에 내세워
+            B2B 라이선스 고정 수익 모델을 확보합니다.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>© 2026 AgriShield AI Platform. Powered by NCPMS Public Database & Solar AI Engine.</p>
+      <p>농업 병해충 AI 라이브 진단 및 맞춤형 처방 서비스 글로벌 기획 보고서 기반 구현 프로토타입</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script src="chatbot.js"></script>
+</body>
+
+</html>

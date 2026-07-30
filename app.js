@@ -207,13 +207,180 @@ document.addEventListener('DOMContentLoaded', () => {
     triggerDiagnosisScan();
   });
 
-  // --- 3. AI DIAGNOSIS & CAMERA SCANNER ENGINE ---
+  // --- 3. AI DIAGNOSIS, REAL CAMERA & SPEECH RECOGNITION (STT / TTS) ENGINE ---
   const cameraFeed = document.getElementById('cameraFeed');
+  const webcamVideo = document.getElementById('webcamVideo');
+  const startCamBtn = document.getElementById('startCamBtn');
+  const switchCamBtn = document.getElementById('switchCamBtn');
+  const voiceMicBtn = document.getElementById('voiceMicBtn');
+  const micStatusText = document.getElementById('micStatusText');
+  const voiceTtsBtn = document.getElementById('voiceTtsBtn');
+
   const boundingBox = document.getElementById('boundingBox');
   const bboxDisease = document.getElementById('bboxDisease');
   const bboxConf = document.getElementById('bboxConf');
   const chatStream = document.getElementById('chatStream');
   const sampleBtns = document.querySelectorAll('.sample-btn');
+
+  let mediaStream = null;
+  let currentFacingMode = 'environment';
+  let isCamActive = false;
+  let recognition = null;
+  let isListening = false;
+  let currentLastBotText = "";
+
+  // A. Real WebCam Stream Handlers
+  async function startWebcam(facingMode = 'environment') {
+    try {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+      }
+      const constraints = {
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      };
+      mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      webcamVideo.srcObject = mediaStream;
+      webcamVideo.classList.remove('hidden');
+      isCamActive = true;
+      startCamBtn.classList.add('active');
+      startCamBtn.innerHTML = `<i class="fa-solid fa-video-slash"></i> 카메라 끄기`;
+      switchCamBtn.classList.remove('hidden');
+      const hudStatus = document.getElementById('hudStatus');
+      if (hudStatus) hudStatus.innerHTML = `<i class="fa-solid fa-circle" style="color:#10b981;"></i> 실시간 카메라 가동 중`;
+    } catch (err) {
+      console.warn("카메라 접근 권한이 없거나 지원되지 않는 브라우저입니다.", err);
+      alert("카메라 장치에 접근할 수 없습니다. 웹캠/모바일 권한 설정을 확인해 주세요.\n(샘플 이미지로 대체 스캔합니다)");
+      stopWebcam();
+    }
+  }
+
+  function stopWebcam() {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      mediaStream = null;
+    }
+    webcamVideo.classList.add('hidden');
+    isCamActive = false;
+    startCamBtn.classList.remove('active');
+    startCamBtn.innerHTML = `<i class="fa-solid fa-camera-retro"></i> 카메라 켜기`;
+    switchCamBtn.classList.add('hidden');
+  }
+
+  startCamBtn?.addEventListener('click', () => {
+    if (isCamActive) {
+      stopWebcam();
+    } else {
+      startWebcam(currentFacingMode);
+    }
+  });
+
+  switchCamBtn?.addEventListener('click', () => {
+    currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
+    startWebcam(currentFacingMode);
+  });
+
+  // B. Web Speech Recognition (STT - Voice Input)
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = 'ko-KR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = function() {
+      isListening = true;
+      voiceMicBtn.classList.add('listening');
+      micStatusText.textContent = "듣고 있어요...";
+    };
+
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript;
+      const chatInput = document.getElementById('chatInput');
+      if (chatInput) {
+        chatInput.value = transcript;
+      }
+      // Trigger chat message sending automatically or set value
+      const sendBtn = document.getElementById('sendChatBtn');
+      if (sendBtn) sendBtn.click();
+    };
+
+    recognition.onerror = function(event) {
+      console.error("음성 인식 오류:", event.error);
+      stopListening();
+    };
+
+    recognition.onend = function() {
+      stopListening();
+    };
+  } else {
+    voiceMicBtn?.addEventListener('click', () => {
+      alert("현재 브라우저는 음성 인식(STT)을 지원하지 않습니다. Chrome 또는 모바일 Safari를 사용해 주세요.");
+    });
+  }
+
+  function stopListening() {
+    isListening = false;
+    if (voiceMicBtn) {
+      voiceMicBtn.classList.remove('listening');
+      micStatusText.textContent = "음성 입력";
+    }
+  }
+
+  voiceMicBtn?.addEventListener('click', () => {
+    if (!SpeechRecognition) return;
+    if (isListening) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+      } catch(e) {
+        console.error(e);
+      }
+    }
+  });
+
+  // C. Text-To-Speech (TTS - Voice Output)
+  function speakText(text) {
+    if (!('speechSynthesis' in window)) {
+      alert("현재 브라우저는 음성 합성(TTS)을 지원하지 않습니다.");
+      return;
+    }
+    window.speechSynthesis.cancel(); // Stop ongoing speech
+
+    // Clean html tags from string
+    const cleanText = text.replace(/<\/?[^>]+(>|$)/g, "").replace(/•/g, "");
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'ko-KR';
+    utterance.rate = 1.0;
+
+    utterance.onstart = function() {
+      voiceTtsBtn?.classList.add('speaking');
+    };
+    utterance.onend = function() {
+      voiceTtsBtn?.classList.remove('speaking');
+    };
+    utterance.onerror = function() {
+      voiceTtsBtn?.classList.remove('speaking');
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  voiceTtsBtn?.addEventListener('click', () => {
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      voiceTtsBtn.classList.remove('speaking');
+    } else if (currentLastBotText) {
+      speakText(currentLastBotText);
+    } else {
+      speakText("현재 진단 및 처방 결과가 없습니다.");
+    }
+  });
 
   function loadSampleData(sampleKey) {
     currentSampleKey = sampleKey;
@@ -290,6 +457,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <button class="action-chip" onclick="window.switchTabToExam()"><i class="fa-solid fa-pen-to-square"></i> 연관 기출문제 풀기</button>
         </div>
       `;
+
+      currentLastBotText = `진단 결과: ${sample.name}. 발병 원인: ${sample.cause}. 등록 약제: ${sample.prescription.pesticide}. 희석 배율: ${sample.prescription.dilution}. 안전사용기준: ${sample.prescription.safety}. 친환경 방제: ${sample.prescription.organic}`;
 
       appendChatMessage('bot', botMessageHtml);
     }, 800);

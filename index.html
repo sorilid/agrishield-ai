@@ -98,6 +98,7 @@
           <div class="viewport-container" id="viewportContainer">
             <!-- Simulated Camera Feed / Image Canvas -->
             <div class="camera-feed" id="cameraFeed">
+              <video id="webcamVideo" autoplay playsinline muted class="webcam-video-element hidden"></video>
               <div class="reticle-grid"></div>
               <div class="scan-line" id="scanLine"></div>
 
@@ -132,16 +133,30 @@
 
           <!-- Camera Controls & Upload -->
           <div class="camera-controls">
-            <div class="upload-box">
-              <input type="file" id="imageUpload" accept="image/*" class="file-input">
-              <label for="imageUpload" class="upload-label">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
-                <span>내 현장 사진 업로드</span>
-              </label>
+            <div class="camera-action-row">
+              <button class="cam-toggle-btn" id="startCamBtn" title="실제 모바일/PC 카메라 켜기">
+                <i class="fa-solid fa-camera-retro"></i> 카메라
+              </button>
+              <button class="cam-toggle-btn secondary hidden" id="switchCamBtn" title="전면/후면 카메라 전환">
+                <i class="fa-solid fa-camera-rotate"></i> 전환
+              </button>
+              <button class="voice-btn" id="voiceMicBtn" title="음성 검색 / 음성 질문 (STT)">
+                <i class="fa-solid fa-microphone"></i> <span id="micStatusText">음성입력</span>
+              </button>
+              <button class="voice-btn tts-btn" id="voiceTtsBtn" title="진단/처방 결과 음성 읽기 (TTS)">
+                <i class="fa-solid fa-volume-high"></i> 음성듣기
+              </button>
+              <div class="upload-box">
+                <input type="file" id="imageUpload" accept="image/*" class="file-input">
+                <label for="imageUpload" class="upload-label">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>사진업로드</span>
+                </label>
+              </div>
+              <button class="trigger-scan-btn" id="triggerScanBtn">
+                <i class="fa-solid fa-bolt"></i> 3초 AI 진단
+              </button>
             </div>
-            <button class="trigger-scan-btn" id="triggerScanBtn">
-              <i class="fa-solid fa-bolt"></i> 3초 AI 라이브 진단 실행
-            </button>
           </div>
         </div>
 
